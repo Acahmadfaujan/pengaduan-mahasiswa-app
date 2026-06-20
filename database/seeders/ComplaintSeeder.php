@@ -2,16 +2,27 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Complaint;
 
 class ComplaintSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
+        Complaint::create([
+            'user_id' => 1,
+            'category_id' => 1,
+            'title' => 'AC kelas rusak',
+            'description' => 'AC di ruang kelas A203 tidak dingin',
+            'status' => 'pending'
+        ]);
+
+        Complaint::create([
+            'user_id' => 1,
+            'category_id' => 2,
+            'title' => 'WiFi lambat',
+            'description' => 'Koneksi internet kampus sangat lambat',
+            'status' => 'process'
+        ]);
     }
 }
