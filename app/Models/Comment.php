@@ -2,14 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
+    use HasFactory;
+
+    // Diubah dari 'content' menjadi 'message'
     protected $fillable = [
         'complaint_id',
-        'user_id',
-        'message'
+        'message',
+        'user_id'
     ];
 
     public function complaint()

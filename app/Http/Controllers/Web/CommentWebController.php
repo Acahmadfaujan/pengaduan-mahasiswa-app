@@ -6,57 +6,70 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Complaint;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CommentWebController extends Controller
 {
     public function index()
     {
-        $comments = Comment::with('complaint')->get();
-
+        $comments = Comment::with(['complaint', 'user'])->latest()->get();
         return view('comments.index', compact('comments'));
     }
 
     public function create()
     {
         $complaints = Complaint::all();
-
         return view('comments.create', compact('complaints'));
     }
 
     public function store(Request $request)
     {
-        Comment::create([
-            'complaint_id' => $request->complaint_id,
-            'user_id' => 1,
-            'message' => $request->message
+        $request->validate([
+            'complaint_id' => 'required',
+            'message' => 'required'
         ]);
 
-        return redirect('/comments');
+        $user = Auth::user();
+
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        Comment::create([
+            'complaint_id' => $request->input('complaint_id'),
+            'message'      => $request->input('message'),
+            'user_id'      => $user->id,
+        ]);
+
+        return redirect()->back();
     }
 
     public function edit($id)
     {
         $comment = Comment::findOrFail($id);
         $complaints = Complaint::all();
-
-        return view('comments.edit', compact('comment','complaints'));
+        return view('comments.edit', compact('comment', 'complaints'));
     }
 
     public function update(Request $request, $id)
     {
-        $comment = Comment::findOrFail($id);
-
-        $comment->update([
-            'message' => $request->message
+        $request->validate([
+            'message' => 'required'
         ]);
 
-        return redirect('/comments');
+        $comment = Comment::findOrFail($id);
+        $comment->update([
+            'complaint_id' => $request->input('complaint_id') ?? $comment->complaint_id,
+            'message'      => $request->input('message'),
+        ]);
+
+        return redirect('/complaints/' . $comment->complaint_id);
     }
 
     public function destroy($id)
     {
-        Comment::destroy($id);
-
-        return redirect('/comments');
+        $comment = Comment::findOrFail($id);
+        $comment->delete();
+        return redirect()->back();
     }
 }

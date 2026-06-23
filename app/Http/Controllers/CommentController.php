@@ -2,100 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Comment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
     public function index()
     {
-        $data = Comment::with(['complaint', 'user'])->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $data
-        ]);
+        return response()->json(Comment::with('complaint')->get(), 200);
     }
 
     public function show($id)
     {
-        $data = Comment::with(['complaint', 'user'])->find($id);
-
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data tidak ditemukan'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $data
-        ]);
+        $comment = Comment::with('complaint')->find($id);
+        return $comment ? response()->json($comment, 200) : response()->json(['message' => 'Not Found'], 404);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'complaint_id' => 'required|exists:complaints,id',
-            'message' => 'required|string'
+            'complaint_id' => 'required',
+            'message' => 'required'
         ]);
 
-        $data = Comment::create([
-            'complaint_id' => $request->complaint_id,
-            'user_id' => 1,
-            'message' => $request->message
+        $user = Auth::user();
+
+        $comment = Comment::create([
+            'complaint_id' => $request->input('complaint_id'),
+            'message'      => $request->input('message'),
+            'user_id'      => $user ? $user->id : 1,
         ]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Komentar berhasil ditambahkan',
-            'data' => $data
-        ], 201);
+        return response()->json($comment, 201);
     }
 
     public function update(Request $request, $id)
     {
-        $data = Comment::find($id);
+        $comment = Comment::find($id);
+        if (!$comment) return response()->json(['message' => 'Not Found'], 404);
 
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data tidak ditemukan'
-            ], 404);
-        }
-
-        $request->validate([
-            'message' => 'required|string'
+        $comment->update([
+            'complaint_id' => $request->input('complaint_id'),
+            'message'      => $request->input('message'),
         ]);
 
-        $data->update([
-            'message' => $request->message
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Komentar berhasil diupdate',
-            'data' => $data
-        ]);
+        return response()->json($comment, 200);
     }
 
     public function destroy($id)
     {
-        $data = Comment::find($id);
-
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data tidak ditemukan'
-            ], 404);
-        }
-
-        $data->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Komentar berhasil dihapus'
-        ]);
+        $comment = Comment::find($id);
+        if (!$comment) return response()->json(['message' => 'Not Found'], 404);
+        $comment->delete();
+        return response()->json(['message' => 'Deleted'], 200);
     }
 }

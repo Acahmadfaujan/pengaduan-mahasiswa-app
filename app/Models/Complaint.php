@@ -4,7 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $category_id
+ * @property string $title
+ * @property string $description
+ * @property string $location
+ * @property string $image_url
+ * @property string $status
+ * @property-read \App\Models\User $user
+ * @property-read \App\Models\Category $category
+ */
 class Complaint extends Model
 {
     use HasFactory;
@@ -16,30 +30,32 @@ class Complaint extends Model
         'category_id',
         'title',
         'description',
+        'location',
+        'image_url', 
         'status'
     ];
 
-    // 🔗 Relasi ke User (pembuat pengaduan)
-    public function user()
+    /**
+     * Relasi balik ke tabel Users
+     */
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    // 🔗 Relasi ke Category
-    public function category()
+    /**
+     * Relasi balik ke tabel Categories
+     */
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id', 'id');
     }
 
-    // 🔗 Relasi ke Comments
-    public function comments()
+    /**
+     * FIX UTAMA: Menambahkan relasi ke tabel Comments agar fungsi dengan komentar tidak crash
+     */
+    public function comments(): HasMany
     {
-        return $this->hasMany(Comment::class);
-    }
-
-    // 🔗 Relasi ke Attachments
-    public function attachments()
-    {
-        return $this->hasMany(Attachment::class);
+        return $this->hasMany(Comment::class, 'complaint_id', 'id');
     }
 }

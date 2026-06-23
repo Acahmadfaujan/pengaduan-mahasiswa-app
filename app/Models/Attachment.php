@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Attachment extends Model
 {
-    protected $fillable = [
-        'complaint_id',
-        'file_path'
-    ];
+    use HasFactory;
+
+    protected $table = 'attachments';
+
+    protected $guarded = [];
 
     public function complaint()
     {

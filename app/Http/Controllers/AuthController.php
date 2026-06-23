@@ -13,56 +13,74 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|string|unique:users,email',
             'password' => 'required|min:6'
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'role'     => 'user',
         ]);
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
+            'status'  => 'success',
             'message' => 'Register berhasil',
-            'data' => $user
+            'data'    => $user
         ], 201);
     }
 
     // LOGIN
     public function login(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
-    ]);
+    {
+        $request->validate([
+            'email'    => 'required',
+            'password' => 'required'
+        ]);
 
-    if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'success' => false,
+                'status'  => 'error',
+                'message' => 'Email atau password salah'
+            ], 401);
+        }
+
+       $user = User::query()->where('email', $request->input('email'))->first();
+
+        // Membuat token Sanctum
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'Email atau password salah'
-        ], 401);
+            'success' => true,
+            'status'  => 'success',
+            'message' => 'Login berhasil',
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'email' => $user->email,
+                'role'  => $user->role ?? 'user',
+                'name'  => $user->name ?? 'User'
+            ]
+        ], 200);
     }
 
-    $user = User::where('email', $request->email)->first();
-
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Login berhasil',
-        'token' => $token
-    ]);
-}
     // LOGOUT
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        
+        if ($user) {
+            $user->tokens()->delete();
+        }
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
+            'status'  => 'success',
             'message' => 'Logout berhasil'
         ]);
     }
